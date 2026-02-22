@@ -1,0 +1,26 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+env/
+venv/
+ENV/
+
+# Flask/SQLite
+instance/
+*.db
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Project specific
+.dist/
+.gemini/
+.agent/
+.agents/
+brain/
+implementation_plan.md
+task.md
+walkthrough.md
