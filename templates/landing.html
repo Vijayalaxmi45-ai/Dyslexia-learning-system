@@ -1,0 +1,201 @@
+{% extends "base.html" %}
+
+{% block title %}{{ t.title }} - {{ t.hero_title }}{% endblock %}
+
+{% block content %}
+<div class="landing-hero py-5 position-relative overflow-hidden">
+    <!-- Background Accents -->
+    <div class="position-absolute top-0 start-0 w-100 h-100 opacity-10"
+        style="background: radial-gradient(circle at 20% 30%, #6366f1 0%, transparent 40%), radial-gradient(circle at 80% 70%, #a855f7 0%, transparent 40%); z-index: -1;">
+    </div>
+
+    <div class="container text-center py-5 d-flex flex-column align-items-center">
+        <h1 class="display-1 fw-extrabold mb-4 hero-text fade-in" style="font-weight: 900; letter-spacing: -2px;">
+            {{ t.hero_title }}
+        </h1>
+        <p class="lead mb-5 text-secondary fs-3 max-w-800 fade-in delay-1 overflow-hidden">
+            {{ t.hero_subtitle }}
+        </p>
+
+        <div class="d-flex flex-wrap justify-content-center gap-4 mb-5 fade-in delay-2">
+            <a href="{{ url_for('assessment') }}" class="btn btn-premium btn-lg shadow-xl py-3 px-5 fs-4">
+                {{ t.start_test }}
+            </a>
+            {% if not current_user.is_authenticated %}
+            <a href="{{ url_for('login') }}" class="btn btn-light glass-card btn-lg shadow-sm py-3 px-5 fs-4 border-0">
+                🔐 {{ t.login }}
+            </a>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<section class="py-5">
+    <div class="container py-5">
+        <h2 class="text-center fw-bold mb-5 display-5">{{ t.why_title }}</h2>
+        <div class="row g-4">
+            <div class="col-md-4">
+                <div class="glass-card h-100 p-5 text-center feature-card border-0">
+                    <div class="display-3 mb-4 icon-float">💙</div>
+                    <h3 class="fw-bold h4 mb-3">Safe Space</h3>
+                    <p class="text-secondary opacity-75">No judgment, just learning at your own pace in a supportive
+                        environment.</p>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="glass-card h-100 p-5 text-center feature-card border-0">
+                    <div class="display-3 mb-4 icon-float delay-1">🧠</div>
+                    <h3 class="fw-bold h4 mb-3">Brain Friendly</h3>
+                    <p class="text-secondary opacity-75">Layouts and fonts designed specifically for how dyslexic minds
+                        process information.</p>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="glass-card h-100 p-5 text-center feature-card border-0">
+                    <div class="display-3 mb-4 icon-float delay-2">🚀</div>
+                    <h3 class="fw-bold h4 mb-3">Success Focused</h3>
+                    <p class="text-secondary opacity-75">Focus on your unique strengths like creativity and complex
+                        problem solving.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="py-5 bg-card-theme rounded-5 shadow-inner-custom">
+    <div class="container py-5">
+        <h2 class="text-center fw-bold mb-5 display-5">{{ t.who_title }}</h2>
+        <div class="row g-4 row-cols-1 row-cols-md-2 row-cols-lg-4">
+            <div class="col">
+                <a href="{{ url_for('assessment', type='student') }}"
+                    class="glass-card h-100 p-4 text-decoration-none hover-scale d-block border-0 text-initial text-center">
+                    <div class="icon-circle bg-warning bg-opacity-10 mb-4 mx-auto">
+                        <span class="fs-1">🎓</span>
+                    </div>
+                    <h3 class="fw-bold h5 text-primary">{{ t.for_students }}</h3>
+                    <p class="text-secondary small opacity-75">Tools and hacks to make reading, writing, and homework
+                        easier.</p>
+                </a>
+            </div>
+            <div class="col">
+                <a href="{{ url_for('assessment', type='parent') }}"
+                    class="glass-card h-100 p-4 text-decoration-none hover-scale d-block border-0 text-initial text-center">
+                    <div class="icon-circle bg-success bg-opacity-10 mb-4 mx-auto">
+                        <span class="fs-1">👨‍👩‍👧</span>
+                    </div>
+                    <h3 class="fw-bold h5 text-success">{{ t.for_parents }}</h3>
+                    <p class="text-secondary small opacity-75">Practical tips and resources to support your child's
+                        learning journey.</p>
+                </a>
+            </div>
+            <div class="col">
+                <a href="{{ url_for('assessment', type='teacher') }}"
+                    class="glass-card h-100 p-4 text-decoration-none hover-scale d-block border-0 text-initial text-center">
+                    <div class="icon-circle bg-primary bg-opacity-10 mb-4 mx-auto">
+                        <span class="fs-1">🍎</span>
+                    </div>
+                    <h3 class="fw-bold h5 text-info">{{ t.for_teachers }}</h3>
+                    <p class="text-secondary small opacity-75">Effective classroom strategies to help every student
+                        reach their potential.</p>
+                </a>
+            </div>
+            <div class="col">
+                <a href="{{ url_for('assessment', type='general') }}"
+                    class="glass-card h-100 p-4 text-decoration-none hover-scale d-block border-0 text-initial text-center">
+                    <div class="icon-circle bg-danger bg-opacity-10 mb-4 mx-auto">
+                        <span class="fs-1">🌟</span>
+                    </div>
+                    <h3 class="fw-bold h5 text-danger">{{ t.for_everyone }}</h3>
+                    <p class="text-secondary small opacity-75">Inclusive screening for adults and anyone exploring
+                        dyslexia.</p>
+                </a>
+            </div>
+        </div>
+    </div>
+</section>
+<style>
+    .bg-card-theme {}
+
+    .text-initial {
+        color: initial;
+    }
+
+    .dark-theme .text-initial {
+        color: var(--text-color);
+    }
+
+    .hero-text {
+        background: linear-gradient(135deg, #6366f1 0%, #a855f7 50%, #3b82f6 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-size: 200% auto;
+        animation: gradientShine 5s linear infinite;
+        background-clip: text;
+    }
+
+    @keyframes gradientShine {
+        to {
+            background-position: 200% center;
+        }
+    }
+
+    .max-w-800 {
+        max-width: 800px;
+    }
+
+    .feature-card {
+        transition: all 0.4s ease;
+    }
+
+    .feature-card:hover {
+        transform: translateY(-12px);
+        box-shadow: 0 30px 60px rgba(0, 0, 0, 0.1) !important;
+    }
+
+    .icon-float {
+        animation: float 3s ease-in-out infinite;
+    }
+
+    .delay-1 {
+        animation-delay: 0.5s;
+    }
+
+    .delay-2 {
+        animation-delay: 1s;
+    }
+
+    @keyframes float {
+
+        0%,
+        100% {
+            transform: translateY(0);
+        }
+
+        50% {
+            transform: translateY(-10px);
+        }
+    }
+
+    .icon-circle {
+        width: 80px;
+        height: 80px;
+        border-radius: 20px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: transform 0.3s ease;
+    }
+
+    .hover-scale:hover .icon-circle {
+        transform: rotate(10deg) scale(1.1);
+    }
+
+    .hover-scale {
+        transition: transform 0.3s ease;
+    }
+
+    .hover-scale:hover {
+        transform: scale(1.02);
+    }
+</style>
+{% endblock %}

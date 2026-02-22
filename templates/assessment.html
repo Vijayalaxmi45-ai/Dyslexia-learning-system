@@ -1,0 +1,191 @@
+{% extends "base.html" %}
+
+{% block title %}Assessment - {{ t.title }}{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div id="assessment-container" class="glass-card p-5 max-w-800 mx-auto mt-4 shadow-xl position-relative">
+        <!-- Progress Bar -->
+        <div class="progress mb-4 rounded-pill shadow-inner" style="height: 12px; background: rgba(0,0,0,0.05);">
+            <div id="progress-bar" class="progress-bar rounded-pill"
+                style="width: 0%; background: var(--primary-gradient); transition: width 0.5s ease;"></div>
+        </div>
+
+        <div class="text-center mb-4">
+            <h1 class="h4 fw-bold text-secondary opacity-50">
+                {% if user_type == 'student' %}{{ t.student_test }}{% elif user_type == 'parent' %}{{ t.parent_test }}{%
+                elif user_type == 'teacher' %}{{ t.teacher_test }}{% else %}{{ t.general_test }}{% endif %}
+            </h1>
+        </div>
+
+        <!-- Question View -->
+        <div id="question-view" class="active">
+            <h2 id="question-text" class="fw-bold mb-4 fs-2 text-center transition-all"></h2>
+            <div class="d-flex justify-content-center gap-4 py-4">
+                <button onclick="handleAnswer(true)" class="btn btn-premium btn-lg flex-fill py-4 fs-3">✅ Yes</button>
+                <button onclick="handleAnswer(false)"
+                    class="btn btn-outline-secondary btn-lg flex-fill py-4 fs-3 border-2">❌ No</button>
+            </div>
+            <div class="text-center mt-5">
+                <span id="question-count"
+                    class="badge rounded-pill bg-secondary bg-opacity-10 text-secondary p-2 px-3 fw-bold"></span>
+            </div>
+        </div>
+
+        <!-- Results View (Hidden) -->
+        <div id="result-view" class="d-none text-center">
+            <div class="display-1 mb-4 icon-float">📊</div>
+            <h2 class="fw-bold mb-3 display-5">Assessment Result</h2>
+            <div id="analysis-text"
+                class="lead mb-5 p-4 rounded-4 bg-primary bg-opacity-10 border-start border-4 border-primary"></div>
+
+            <div class="row text-start g-4 mb-5">
+                <div class="col-12">
+                    <div class="p-4 rounded-4 bg-light dark-card border border-opacity-10">
+                        <h3 class="fw-bold h4 mb-4">💡 Personalized Suggestions</h3>
+                        <div id="suggestions-list" class="row row-cols-1 row-cols-md-2 g-3">
+                            <!-- JS will inject items here -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="d-flex justify-content-center gap-3">
+                <a href="{{ url_for('learning') }}" class="btn btn-premium btn-lg px-5">Explore Tools</a>
+                <button onclick="location.reload()" class="btn btn-outline-secondary btn-lg px-5">Restart</button>
+            </div>
+        </div>
+
+        <!-- Loading Overlay -->
+        <div id="loading-overlay"
+            class="d-none position-absolute top-0 start-0 w-100 h-100 d-flex flex-column align-items-center justify-content-center bg-white bg-opacity-90 rounded-4"
+            style="z-index: 10;">
+            <div class="spinner-border text-primary mb-3" role="status" style="width: 3rem; height: 3rem;"></div>
+            <span class="fw-bold text-primary">Analyzing your patterns...</span>
+        </div>
+    </div>
+</div>
+
+<style>
+    .max-w-800 {
+        max-width: 800px;
+    }
+
+    .shadow-inner {
+        box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.05);
+    }
+
+    .dark-card {
+        background: var(--bg-color);
+    }
+
+    .suggestion-item {
+        background: var(--card-bg);
+        border: 1px solid var(--border-color);
+        padding: 1rem 1.5rem;
+        border-radius: 16px;
+        font-size: 0.95rem;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        transition: transform 0.2s ease, border-color 0.2s ease;
+    }
+
+    .suggestion-item:hover {
+        transform: scale(1.02);
+        border-color: #6366f1;
+    }
+
+    .suggestion-item::before {
+        content: "⭐";
+        font-size: 1.2rem;
+    }
+
+    .icon-float {
+        animation: float 3.5s ease-in-out infinite;
+    }
+
+    @keyframes float {
+
+        0%,
+        100% {
+            transform: translateY(0);
+        }
+
+        50% {
+            transform: translateY(-15px);
+        }
+    }
+</style>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    (function () {
+        const testQuestions = {{ questions| tojson
+    }};
+    let stepIndex = 0;
+    const userAnswers = [];
+
+    const displayElem = document.getElementById('question-text');
+    const countElem = document.getElementById('question-count');
+    const pBar = document.getElementById('progress-bar');
+
+    window.updateStep = function () {
+        if (stepIndex < testQuestions.length) {
+            displayElem.style.opacity = '0';
+            setTimeout(() => {
+                displayElem.innerText = testQuestions[stepIndex];
+                displayElem.style.opacity = '1';
+                countElem.innerText = `Question ${stepIndex + 1} of ${testQuestions.length}`;
+                pBar.style.width = `${(stepIndex / testQuestions.length) * 100}%`;
+            }, 200);
+        } else {
+            window.submitTest();
+        }
+    };
+
+    window.handleAnswer = function (ans) {
+        userAnswers.push(ans);
+        stepIndex++;
+        window.updateStep();
+    };
+
+    window.submitTest = async function () {
+        document.getElementById('question-view').classList.add('d-none');
+        document.getElementById('loading-overlay').classList.remove('d-none');
+        pBar.style.width = '100%';
+
+        try {
+            const res = await fetch('/api/predict', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ answers: userAnswers })
+            });
+            const data = await res.json();
+
+            document.getElementById('loading-overlay').classList.add('d-none');
+            document.getElementById('result-view').classList.remove('d-none');
+            document.getElementById('analysis-text').innerText = data.analysis;
+
+            const list = document.getElementById('suggestions-list');
+            list.innerHTML = '';
+            if (data.suggestions) {
+                data.suggestions.forEach(s => {
+                    const col = document.createElement('div');
+                    col.className = 'col';
+                    col.innerHTML = `<div class="suggestion-item shadow-sm h-100">${s}</div>`;
+                    list.appendChild(col);
+                });
+            }
+
+        } catch (err) {
+            console.error(err);
+            alert('An error occurred. Please try again.');
+        }
+    };
+
+    window.updateStep();
+    }) ();
+</script>
+{% endblock %}

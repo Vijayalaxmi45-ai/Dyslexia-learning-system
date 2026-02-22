@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="{{ current_lang }}" class="{{ 'dark-theme' if current_theme == 'dark' else '' }}">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}{{ t.title }}{% endblock %}</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Google Fonts -->
+    <link
+        href="https://fonts.googleapis.com/css2?family=Lexend+Deca:wght@300;400;600;700&family=Noto+Sans+Devanagari:wght@400;700&display=swap"
+        rel="stylesheet">
+
+    <style>
+        /* Themes */
+        :root {
+            --primary-gradient: linear-gradient(135deg, #6366f1 0%, #a855f7 100%);
+            --secondary-gradient: linear-gradient(135deg, #3b82f6 0%, #2dd4bf 100%);
+            --bg-color: #f8fafc;
+            --card-bg: rgba(255, 255, 255, 0.85);
+            --text-color: #1e293b;
+            --nav-bg: rgba(255, 255, 255, 0.7);
+            --border-color: rgba(0, 0, 0, 0.05);
+            --mute-color: #64748b;
+        }
+
+        .dark-theme {
+            --bg-color: #0f172a;
+            --card-bg: rgba(30, 41, 59, 0.9);
+            --text-color: #f1f5f9;
+            --nav-bg: rgba(15, 23, 42, 0.7);
+            --border-color: rgba(255, 255, 255, 0.1);
+            --mute-color: #94a3b8;
+        }
+
+        /* Dark Mode Utility Overrides */
+        .dark-theme .bg-light,
+        .dark-theme .bg-light-subtle {
+            background-color: #1e293b !important;
+            color: #f1f5f9 !important;
+        }
+
+        .dark-theme .text-dark,
+        .dark-theme .text-dark-emphasis {
+            color: #f8fafc !important;
+        }
+
+        .dark-theme .border-light {
+            border-color: rgba(255, 255, 255, 0.1) !important;
+        }
+
+        .dark-theme .glass-card {
+            background: var(--card-bg);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+        }
+
+        body {
+            font-family: 'Lexend Deca', 'Noto Sans Devanagari', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            min-height: 100vh;
+        }
+
+        .navbar {
+            background: var(--nav-bg);
+            backdrop-filter: blur(15px);
+            border-bottom: 1px solid var(--border-color);
+            padding: 1rem 2rem;
+            transition: background 0.3s ease;
+        }
+
+        .navbar-brand {
+            font-weight: 800;
+            font-size: 1.6rem;
+            background: var(--primary-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .nav-link {
+            color: var(--text-color) !important;
+            font-weight: 600;
+            margin: 0 0.5rem;
+            opacity: 0.8;
+            transition: opacity 0.3s ease;
+        }
+
+        .nav-link:hover {
+            opacity: 1;
+        }
+
+        .btn-premium {
+            background: var(--primary-gradient);
+            color: white !important;
+            border: none;
+            border-radius: 14px;
+            padding: 0.7rem 1.8rem;
+            font-weight: 700;
+            box-shadow: 0 10px 20px rgba(99, 102, 241, 0.2);
+            transition: all 0.3s ease;
+        }
+
+        .btn-premium:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 15px 30px rgba(99, 102, 241, 0.3);
+        }
+
+        .glass-card {
+            background: var(--card-bg);
+            backdrop-filter: blur(12px);
+            border: 1px solid var(--border-color);
+            border-radius: 24px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.05);
+        }
+
+        .theme-toggle,
+        .lang-select {
+            cursor: pointer;
+            padding: 0.5rem;
+            border-radius: 12px;
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            color: var(--text-color);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s ease;
+        }
+
+        .theme-toggle:hover {
+            transform: rotate(15deg);
+        }
+
+        .footer {
+            padding: 4rem 0;
+            background: var(--nav-bg);
+            border-top: 1px solid var(--border-color);
+            margin-top: 6rem;
+        }
+
+        .dyslexic-font {
+            font-family: 'Open-Dyslexic', sans-serif !important;
+        }
+
+        @font-face {
+            font-family: 'Open-Dyslexic';
+            src: url('https://cdn.jsdelivr.net/npm/open-dyslexic@1.0.3/OpenDyslexic-Regular.otf');
+        }
+
+        /* Animations */
+        .fade-in {
+            animation: fadeIn 0.8s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Reading Tools */
+        #reading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: rgba(255, 243, 205, 0.3);
+            pointer-events: none;
+            z-index: 9998;
+            display: none;
+        }
+
+        #reading-ruler {
+            position: fixed;
+            left: 0;
+            width: 100vw;
+            height: 40px;
+            background: rgba(99, 102, 241, 0.2);
+            border-top: 2px solid #6366f1;
+            border-bottom: 2px solid #6366f1;
+            pointer-events: none;
+            z-index: 9999;
+            display: none;
+            cursor: move;
+        }
+
+        /* Placeholder & Form Fixes */
+        ::placeholder {
+            color: var(--mute-color) !important;
+            opacity: 0.6;
+        }
+
+        .dark-theme input,
+        .dark-theme textarea {
+            background-color: rgba(30, 41, 59, 0.5) !important;
+            color: white !important;
+            border-color: rgba(255, 255, 255, 0.1) !important;
+        }
+
+        .dark-theme .btn-light {
+            background: rgba(255, 255, 255, 0.1) !important;
+            color: white !important;
+            border: 1px solid rgba(255, 255, 255, 0.1) !important;
+        }
+    </style>
+    {% block head %}{% endblock %}
+</head>
+
+<body>
+    <nav class="navbar navbar-expand-lg sticky-top">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="{{ url_for('index') }}">🧠 {{ t.title }}</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item"><a class="nav-link" href="{{ url_for('index') }}">{{ t.home }}</a></li>
+                    <li class="nav-item"><a class="nav-link" href="{{ url_for('about') }}">{{ t.about }}</a></li>
+                    <li class="nav-item"><a class="nav-link" href="{{ url_for('assessment') }}">Screening</a></li>
+                    <li class="nav-item"><a class="nav-link" href="{{ url_for('tools') }}">{{ t.tools }}</a></li>
+                    <li class="nav-item"><a class="nav-link" href="{{ url_for('contact') }}">{{ t.contact }}</a></li>
+                </ul>
+                <div class="d-flex align-items-center gap-3">
+                    <!-- Language Selector -->
+                    <div class="dropdown">
+                        <button class="lang-select dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                            🌐 {{ t.lang_name }}
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-end border-0 shadow-lg p-2 rounded-4">
+                            <li><a class="dropdown-item rounded-3"
+                                    href="{{ url_for('set_lang', lang='en') }}">English</a></li>
+                            <li><a class="dropdown-item rounded-3" href="{{ url_for('set_lang', lang='hi') }}">हिंदी
+                                    (Hindi)</a></li>
+                            <li><a class="dropdown-item rounded-3" href="{{ url_for('set_lang', lang='mr') }}">मराठी
+                                    (Marathi)</a></li>
+                        </ul>
+                    </div>
+
+                    <!-- Theme Toggle -->
+                    <a href="{{ url_for('toggle_theme') }}" class="theme-toggle text-decoration-none">
+                        {% if current_theme == 'dark' %} ☀️ {% else %} 🌙 {% endif %}
+                    </a>
+
+                    {% if current_user.is_authenticated %}
+                    <div class="dropdown">
+                        <button class="btn btn-outline-secondary dropdown-toggle rounded-pill" type="button"
+                            data-bs-toggle="dropdown">
+                            {{ current_user.username }}
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-end border-0 shadow-lg p-2 rounded-4">
+                            <li><a class="dropdown-item rounded-3" href="{{ url_for('dashboard') }}">Dashboard</a></li>
+                            <li>
+                                <hr class="dropdown-divider">
+                            </li>
+                            <li><a class="dropdown-item rounded-3 text-danger" href="{{ url_for('logout') }}">Logout</a>
+                            </li>
+                        </ul>
+                    </div>
+                    {% else %}
+                    <a href="{{ url_for('login') }}" class="nav-link">{{ t.login }}</a>
+                    <a href="{{ url_for('register') }}" class="btn btn-premium">{{ t.register }}</a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <main class="fade-in">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+        <div class="container mt-4">
+            {% for category, message in messages %}
+            <div class="alert alert-{{ 'danger' if category == 'error' else 'success' }} border-0 shadow-sm rounded-4 alert-dismissible fade show"
+                role="alert">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+        {% endwith %}
+
+        {% block content %}{% endblock %}
+    </main>
+
+    <footer class="footer">
+        <div class="container text-center">
+            <h4 class="fw-bold mb-3 gradient-text">{{ t.title }}</h4>
+            <p class="text-secondary mb-4">Empowering dyslexic minds through innovation.</p>
+            <div class="d-flex justify-content-center gap-4 mb-4">
+                <a href="#" class="text-secondary text-decoration-none">Privacy Policy</a>
+                <a href="#" class="text-secondary text-decoration-none">Terms of Service</a>
+                <a href="{{ url_for('contact') }}" class="text-secondary text-decoration-none">{{ t.contact }}</a>
+            </div>
+            <p class="text-secondary opacity-50 mb-0">&copy; 2026 {{ t.title }}. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <!-- Tools Elements -->
+    <div id="reading-overlay"></div>
+    <div id="reading-ruler"></div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Global Tools Logic
+        const readingOverlay = document.getElementById('reading-overlay');
+        const readingRuler = document.getElementById('reading-ruler');
+
+        window.toggleOverlay = function (color = 'rgba(255, 243, 205, 0.3)') {
+            if (readingOverlay.style.display !== 'block') {
+                readingOverlay.style.background = color;
+                readingOverlay.style.display = 'block';
+            } else {
+                readingOverlay.style.display = 'none';
+            }
+        };
+
+        window.toggleRuler = function () {
+            if (readingRuler.style.display !== 'block') {
+                readingRuler.style.display = 'block';
+                document.addEventListener('mousemove', moveRuler);
+            } else {
+                readingRuler.style.display = 'none';
+                document.removeEventListener('mousemove', moveRuler);
+            }
+        };
+
+        function moveRuler(e) {
+            readingRuler.style.top = (e.clientY - 20) + 'px';
+        }
+
+        window.toggleDyslexicFont = function () {
+            document.body.classList.toggle('dyslexic-font');
+            // Sync any existing switches
+            const toggles = document.querySelectorAll('#font-toggle');
+            toggles.forEach(t => t.checked = document.body.classList.contains('dyslexic-font'));
+        };
+    </script>
+    {% block scripts %}{% endblock %}
+</body>
+
+</html>

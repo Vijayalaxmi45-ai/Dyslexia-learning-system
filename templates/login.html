@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+
+{% block title %}{{ t.login }} - {{ t.title }}{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center py-5">
+        <div class="col-md-5">
+            <div class="glass-card p-5 mt-4 fade-in">
+                <div class="text-center mb-5">
+                    <div class="display-3 mb-3">🔐</div>
+                    <h1 class="fw-bold mb-0 display-6">{{ t.login }}</h1>
+                    <p class="text-secondary opacity-75 mt-2">Welcome back! Please enter your details.</p>
+                </div>
+
+                <form action="{{ url_for('login') }}" method="POST">
+                    <div class="mb-4">
+                        <label for="email"
+                            class="form-label fw-bold small text-uppercase tracking-wider opacity-75">Email
+                            Address</label>
+                        <input type="email" class="form-control form-control-lg rounded-4 p-3 bg-light border-0"
+                            id="email" name="email" placeholder="name@example.com" required>
+                    </div>
+                    <div class="mb-5">
+                        <div class="d-flex justify-content-between">
+                            <label for="password"
+                                class="form-label fw-bold small text-uppercase tracking-wider opacity-75">Password</label>
+                            <a href="#" class="small text-primary text-decoration-none fw-bold">Forgot?</a>
+                        </div>
+                        <input type="password" class="form-control form-control-lg rounded-4 p-3 bg-light border-0"
+                            id="password" name="password" required>
+                    </div>
+                    <button type="submit" class="btn btn-premium btn-lg w-100 py-3 shadow-lg mb-4">
+                        {{ t.login }}
+                    </button>
+                </form>
+
+                <p class="text-center mb-0 mt-4">
+                    New here? <a href="{{ url_for('register') }}"
+                        class="text-primary fw-bold text-decoration-none">Create an account</a>
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .tracking-wider {
+        letter-spacing: 0.1em;
+    }
+
+    .form-control:focus {
+        background: white !important;
+        box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1);
+    }
+
+    .dark-theme .form-control {
+        background: #1e293b !important;
+        color: white;
+    }
+
+    .dark-theme .form-control:focus {
+        background: #334155 !important;
+    }
+</style>
+{% endblock %}
+ 

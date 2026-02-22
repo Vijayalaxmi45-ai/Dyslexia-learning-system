@@ -1,0 +1,569 @@
+{% extends "base.html" %}
+
+{% block title %}{{ module.title }} - {{ t.title }}{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="text-center mb-5 fade-in">
+        <div class="display-1 mb-3">{{ module.icon }}</div>
+        <h1 class="display-3 fw-bold mb-3 gradient-text">{{ module.title }}</h1>
+        <p class="lead text-secondary max-w-800 mx-auto">{{ module.full_description }}</p>
+    </div>
+
+    <div class="row g-4 fade-in delay-1">
+        {% for strategy in module.strategies %}
+        <div class="col-md-4">
+            <div class="glass-card h-100 p-5 feature-hover border-0 shadow-lg text-center">
+                <h3 class="fw-bold h4 mb-3">{{ strategy.name }}</h3>
+                <p class="text-secondary opacity-75 mb-4">{{ strategy.desc }}</p>
+                <button class="btn btn-premium w-100 rounded-pill action-btn" data-tool-id="{{ strategy.id }}">
+                    {{ strategy.action }}
+                </button>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- Tool Modal -->
+    <div class="modal fade" id="toolModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+            <div class="modal-content glass-card border-0 shadow-lg">
+                <div class="modal-header border-0 pb-0">
+                    <h5 class="modal-title fw-bold text-gradient" id="toolModalLabel">Tool Title</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body p-4" id="toolModalBody">
+                    <!-- Tool content injected here -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {% block scripts %}
+    <script>
+        const T = {
+            click_to_start: "{{ t.click_to_start }}",
+            listening: "{{ t.listening }}",
+            recording_paused: "{{ t.recording_paused }}",
+            spoken_placeholder: "{{ t.spoken_placeholder }}",
+            clear_text: "{{ t.clear_text }}",
+            copy_text: "{{ t.copy_text }}",
+            add_idea: "{{ t.add_idea }}",
+            main_topic: "{{ t.main_topic }}",
+            mindmap_hint: "{{ t.mindmap_hint }}",
+            grammar_hint: "{{ t.grammar_hint }}",
+            check_fix: "{{ t.check_fix }}",
+            suggestions_applied: "{{ t.suggestions_applied }}",
+            simplify_steps: "{{ t.simplify_steps }}",
+            seq_hint: "{{ t.seq_hint }}",
+            voice_reminders: "{{ t.voice_reminders }}",
+            record_new: "{{ t.record_new }}",
+            start_focus: "{{ t.start_focus }}",
+            pause: "{{ t.pause }}",
+            break_time: "{{ t.break_time }}",
+            bead_hint: "{{ t.bead_hint }}",
+            total: "{{ t.total }}",
+            visual_strategy: "{{ t.visual_strategy }}",
+            tens: "{{ t.tens }}",
+            units: "{{ t.units }}",
+            loading: "{{ t.loading }}",
+            routine_morning: "{{ t.routine_morning }}",
+            routine_afternoon: "{{ t.routine_afternoon }}",
+            routine_night: "{{ t.routine_night }}",
+            check_planner: "{{ t.check_planner }}"
+        };
+
+        document.addEventListener('DOMContentLoaded', function () {
+            const toolModalEl = document.getElementById('toolModal');
+            if (!toolModalEl) return;
+            const toolModal = new bootstrap.Modal(toolModalEl);
+            const modalTitle = document.getElementById('toolModalLabel');
+            const modalBody = document.getElementById('toolModalBody');
+
+            document.querySelectorAll('.action-btn').forEach(btn => {
+                btn.addEventListener('click', function () {
+                    const toolId = this.getAttribute('data-tool-id');
+                    const toolName = this.closest('.glass-card').querySelector('h3').innerText;
+
+                    if (toolId === 'overlay-tool') {
+                        if (window.toggleOverlay) window.toggleOverlay();
+                    } else if (toolId === 'guided-tool') {
+                        if (window.toggleRuler) window.toggleRuler();
+                    } else if (toolId === 'font-tool') {
+                        if (window.toggleDyslexicFont) window.toggleDyslexicFont();
+                    } else {
+                        modalTitle.innerText = toolName;
+                        modalBody.innerHTML = `<div class="text-center p-5"><div class="spinner-border text-primary" role="status"></div><div class="mt-3">${T.loading}</div></div>`;
+                        toolModal.show();
+
+                        // Writing Support
+                        if (toolId === 'dictation-tool') loadDictation();
+                        else if (toolId === 'mindmap-tool') loadMindMapping();
+                        else if (toolId === 'grammar-tool') loadGrammarAssistant();
+
+                        // Memory Aids
+                        else if (toolId === 'timetable-tool') loadVisualTimetable();
+                        else if (toolId === 'sequence-tool') loadSequenceBreaker();
+                        else if (toolId === 'voice-tool') loadVoiceNotes();
+
+                        // Focus Support
+                        else if (toolId === 'pomodoro-tool') loadPomodoro();
+                        else if (toolId === 'noise-tool') loadNoiseMasking();
+                        else if (toolId === 'limit-tool') loadTaskLimiter();
+
+                        // Math Mastering
+                        else if (toolId === 'abacus-tool') loadAbacus();
+                        else if (toolId === 'mathbreak-tool') loadMathBreakdown();
+                        else if (toolId === 'symbol-tool') loadSymbolDecoder();
+
+                        // Organization Hacks
+                        else if (toolId === 'filing-tool') loadColorCodedFiling();
+                        else if (toolId === 'declutter-tool') loadDigitalDeclutter();
+                        else if (toolId === 'routine-tool') loadRoutineBuilder();
+
+                        else {
+                            modalBody.innerHTML = `<p class="text-center py-4">Implementation for <b>${toolName}</b> is in progress!</p>`;
+                        }
+                    }
+                });
+            });
+
+            // --- WRITING SUPPORT ---
+            function loadDictation() {
+                modalBody.innerHTML = `
+                    <div class="text-center p-4">
+                        <div class="mic-icon mb-4" id="mic-container">
+                            <div class="pulse-ring"></div>
+                            <div class="mic-circle bg-premium text-white d-flex align-items-center justify-content-center mx-auto" style="width: 80px; height: 80px; border-radius: 50%; cursor: pointer;">
+                                <span class="fs-2">🎤</span>
+                            </div>
+                        </div>
+                        <h4 class="fw-bold mb-3" id="mic-status">${T.click_to_start}</h4>
+                        <div class="p-4 bg-light rounded-4 border text-start min-height-100" id="dictation-text">
+                            <span class="text-muted italic">${T.spoken_placeholder}</span>
+                        </div>
+                        <div class="mt-4 d-flex justify-content-center gap-3">
+                            <button class="btn btn-outline-secondary rounded-pill" onclick="clearDictation()">${T.clear_text}</button>
+                            <button class="btn btn-premium rounded-pill" onclick="copyDictation()">${T.copy_text}</button>
+                        </div>
+                    </div>
+                `;
+                let recording = false;
+                const mic = document.getElementById('mic-container');
+                const status = document.getElementById('mic-status');
+                const text = document.getElementById('dictation-text');
+
+                mic.onclick = () => {
+                    recording = !recording;
+                    mic.classList.toggle('active', recording);
+                    status.innerText = recording ? 'Listening...' : 'Recording Paused';
+                    if (recording) {
+                        setTimeout(() => {
+                            text.innerHTML = '<span class="fw-bold text-dark">" Dyslexia is not a lack of intelligence, but a different way of processing information. "</span>';
+                        }, 2000);
+                    }
+                };
+            }
+
+            function loadMindMapping() {
+                modalBody.innerHTML = `
+                    <div class="mindmap-tool">
+                        <div class="d-flex justify-content-between align-items-center mb-4">
+                            <p class="text-secondary mb-0">${T.mindmap_hint}</p>
+                            <button class="btn btn-sm btn-premium rounded-pill" onclick="addNode()">${T.add_idea}</button>
+                        </div>
+                        <div id="mindmap-board" class="p-5 bg-light rounded-4 border d-flex flex-wrap gap-3 justify-content-center align-items-center" style="min-height: 250px;">
+                            <div class="mm-node-main glass-card p-3 fw-bold text-primary border-primary">${T.main_topic}</div>
+                        </div>
+                    </div>
+                `;
+            }
+
+            window.addNode = function () {
+                const board = document.getElementById('mindmap-board');
+                const ideas = ["Research", "Draft", "Review", "Notes", "Key Points", "Examples"];
+                const idea = ideas[Math.floor(Math.random() * ideas.length)];
+                const div = document.createElement('div');
+                div.className = 'mm-node glass-card p-2 px-3 fade-in';
+                div.innerHTML = idea;
+                board.appendChild(div);
+            }
+
+            function loadGrammarAssistant() {
+                modalBody.innerHTML = `
+                    <div class="grammar-tool">
+                        <p class="text-secondary mb-4">${T.grammar_hint}</p>
+                        <textarea id="grammar-input" class="form-control rounded-4 p-3 border mb-4" rows="5" placeholder="Teh quick bown fox jumps over the lazy dog..."></textarea>
+                        <button class="btn btn-premium w-100 rounded-pill" onclick="checkGrammar()">${T.check_fix}</button>
+                        <div id="grammar-result" class="mt-4"></div>
+                    </div>
+                `;
+            }
+
+            window.checkGrammar = function () {
+                const input = document.getElementById('grammar-input').value;
+                const resultDiv = document.getElementById('grammar-result');
+                if (!input) return;
+
+                const fixed = input
+                    .replace(/teh/gi, 'the')
+                    .replace(/bown/gi, 'brown')
+                    .replace(/recieve/gi, 'receive')
+                    .replace(/wich/gi, 'which');
+
+                resultDiv.innerHTML = `
+                    <div class="p-3 bg-light rounded-4 border">
+                        <div class="small fw-bold text-success mb-2">${T.suggestions_applied}</div>
+                        <div class="fs-5">${fixed}</div>
+                    </div>
+                `;
+            }
+
+            // --- MEMORY AIDS ---
+            function loadVisualTimetable() {
+                const slots = [
+                    { time: '08:00', icon: '☀️', task: 'Morning Routine' },
+                    { time: '09:00', icon: '📚', task: 'Study Session 1' },
+                    { time: '11:00', icon: '🍎', task: 'Break Time' },
+                    { time: '12:00', icon: '💻', task: 'Research Work' }
+                ];
+                modalBody.innerHTML = `
+                    <div class="timetable-tool">
+                        <div class="list-group gap-3">
+                            ${slots.map(s => `
+                                <div class="list-group-item glass-card border-0 shadow-sm p-3 d-flex align-items-center gap-4">
+                                    <div class="fw-bold text-primary" style="width: 60px;">${s.time}</div>
+                                    <div class="fs-3">${s.icon}</div>
+                                    <div class="fw-bold flex-grow-1">${s.task}</div>
+                                    <div class="form-check"><input class="form-check-input" type="checkbox"></div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                `;
+            }
+
+            function loadSequenceBreaker() {
+                modalBody.innerHTML = `
+                    <div class="sequence-tool">
+                        <p class="text-secondary mb-4">${T.seq_hint}</p>
+                        <textarea id="seq-input" class="form-control rounded-4 p-3 border mb-4" rows="4" placeholder="First you need to open the book, then find page 24, then read the first paragraph and write a summary."></textarea>
+                        <button class="btn btn-premium w-100 rounded-pill" onclick="breakSequence()">${T.simplify_steps}</button>
+                        <div id="seq-result" class="mt-4"></div>
+                    </div>
+                `;
+            }
+
+            window.breakSequence = function () {
+                const input = document.getElementById('seq-input').value;
+                const resultDiv = document.getElementById('seq-result');
+                if (!input) return;
+
+                const steps = input.split(/then|and|next|,|\./gi).filter(s => s.trim().length > 3);
+                resultDiv.innerHTML = `
+                    <div class="p-3 bg-light rounded-4 border">
+                        ${steps.map((s, i) => `<div class="mb-2 d-flex gap-3"><span class="badge bg-primary rounded-pill h-100 mt-1">${i + 1}</span> <span>${s.trim()}</span></div>`).join('')}
+                    </div>
+                `;
+            }
+
+            function loadVoiceNotes() {
+                modalBody.innerHTML = `
+                    <div class="voice-notes-tool text-center p-4">
+                        <div class="display-3 mb-4">🎙️</div>
+                        <h4 class="fw-bold mb-4">${T.voice_reminders}</h4>
+                        <div class="list-group gap-2 text-start mb-4">
+                            <div class="list-group-item glass-card border-0 d-flex justify-content-between">
+                                <span>Note 1</span>
+                                <span class="text-primary">▶ 0:15</span>
+                            </div>
+                        </div>
+                        <button class="btn btn-premium rounded-pill w-100">${T.record_new}</button>
+                    </div>
+                `;
+            }
+
+            // --- FOCUS SUPPORT ---
+            let pTimer;
+            function loadPomodoro() {
+                clearInterval(pTimer);
+                modalBody.innerHTML = `
+                    <div class="text-center p-4">
+                        <div class="display-1 fw-bold mb-4 gradient-text" id="p-timer">25:00</div>
+                        <button id="p-btn" onclick="tTimer()" class="btn btn-premium btn-lg rounded-pill px-5">Start Focus</button>
+                    </div>`;
+                let time = 25 * 60;
+                let active = false;
+                window.tTimer = function () {
+                    active = !active;
+                    document.getElementById('p-btn').innerText = active ? T.pause : T.start_focus;
+                    if (active) {
+                        pTimer = setInterval(() => {
+                            time--;
+                            const m = Math.floor(time / 60), s = time % 60;
+                            document.getElementById('p-timer').innerText = m + ':' + s.toString().padStart(2, '0');
+                            if (time <= 0) { clearInterval(pTimer); alert(T.break_time); }
+                        }, 1000);
+                    } else clearInterval(pTimer);
+                };
+            }
+
+            function loadNoiseMasking() {
+                const types = [
+                    { n: 'White Noise', i: '💨' },
+                    { n: 'Rain', i: '🌧️' },
+                    { n: 'Forest', i: '🌲' },
+                    { n: 'Ocean', i: '🌊' }
+                ];
+                modalBody.innerHTML = `
+                    <div class="noise-tool row g-3">
+                        ${types.map(t => `
+                            <div class="col-6">
+                                <div class="glass-btn p-4 rounded-4 border text-center cursor-pointer h-100" onclick="this.classList.toggle('active-noise')">
+                                    <div class="display-5 mb-2">${t.i}</div>
+                                    <div class="fw-bold">${t.n}</div>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                    <div class="mt-4">
+                        <input type="range" class="form-range" value="50">
+                        <div class="small text-secondary text-center">Volume</div>
+                    </div>
+                `;
+            }
+
+            function loadTaskLimiter() {
+                modalBody.innerHTML = `
+                    <div class="task-limiter-tool p-3">
+                        <h4 class="fw-bold mb-4">Choose ONE Focus Goal</h4>
+                        <div class="list-group gap-2">
+                            ${['Reading Chapter 1', 'Writing Thesis', 'Math Homework', 'Email Reply'].map(t => `
+                                <div class="list-group-item glass-card border-0 p-3 d-flex align-items-center cursor-pointer" onclick="this.parentElement.innerHTML='<div class=\\'text-center p-5\\'><h2 class=\\'gradient-text fw-bold mb-3\\'>${t}</h2><p>You are now focusing ONLY on this. Stay on track!</p></div>'">
+                                    ${t}
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                `;
+            }
+
+            // --- MATH MASTERING ---
+            function loadAbacus() {
+                modalBody.innerHTML = `
+                    <div class="abacus-tool text-center">
+                        <p class="text-secondary mb-4">${T.bead_hint}</p>
+                        <div class="d-flex justify-content-center gap-3 mb-4">
+                            ${[10, 1].map(val => `
+                                <div class="p-3 bg-light rounded-4 border" style="width: 100px;">
+                                    <div class="small fw-bold text-secondary mb-3">${val === 10 ? T.tens : T.units}</div>
+                                    <div id="col-${val}" class="d-flex flex-column gap-2">
+                                        ${[1, 2, 3, 4, 5].map(i => `<div onclick="toggleBead(this, ${val})" class="bead rounded-pill" style="height: 25px; background: var(--primary-gradient); cursor: pointer; transition: 0.2s;"></div>`).join('')}
+                                    </div>
+                                    <div id="val-${val}" class="mt-3 fs-4 fw-bold text-primary">0</div>
+                                </div>
+                            `).join('')}
+                        </div>
+                        <div class="display-5 fw-bold mt-4 pt-3 border-top">${T.total} <span id="abacus-total" class="gradient-text">0</span></div>
+                    </div>`;
+                window.toggleBead = function (el, val) {
+                    el.classList.toggle('bg-secondary');
+                    el.classList.toggle('opacity-25');
+                    let total = 0;
+                    [10, 1].forEach(v => {
+                        const active = document.querySelectorAll('#col-' + v + ' .bead:not(.bg-secondary)').length;
+                        document.getElementById('val-' + v).innerText = active;
+                        total += active * v;
+                    });
+                    document.getElementById('abacus-total').innerText = total;
+                };
+            }
+
+            function loadMathBreakdown() {
+                modalBody.innerHTML = `
+                    <div class="math-tool">
+                        <p class="text-secondary mb-4 text-center">Break down addition into visual chunks.</p>
+                        <div class="input-group mb-4 shadow-sm rounded-pill overflow-hidden border">
+                            <input type="text" id="math-input" class="form-control border-0 p-3" placeholder="Try: 45 + 27">
+                            <button id="breakdown-submit" onclick="calculateBreakdown()" class="btn btn-premium px-4 border-0">Breakdown</button>
+                        </div>
+                        <div id="math-result" class="fade-in"></div>
+                    </div>
+                `;
+            }
+
+            window.calculateBreakdown = function () {
+                const inputEl = document.getElementById('math-input');
+                if (!inputEl) return;
+                const input = inputEl.value;
+                const resultDiv = document.getElementById('math-result');
+
+                if (input.includes('+')) {
+                    const parts = input.split('+').map(p => parseInt(p.trim()));
+                    if (parts.length === 2 && !isNaN(parts[0]) && !isNaN(parts[1])) {
+                        const [a, b] = parts;
+                        const unitsA = a % 10;
+                        const tensA = Math.floor(a / 10) * 10;
+                        const unitsB = b % 10;
+                        const tensB = Math.floor(b / 10) * 10;
+                        resultDiv.innerHTML = `
+                            <div class="p-4 bg-light rounded-4 border">
+                                <h4 class="fw-bold mb-4 text-primary text-center">${T.visual_strategy}</h4>
+                                <div class="mb-3 d-flex align-items-center"><span class="badge bg-primary rounded-pill me-3">1</span><span>${T.tens_label} ${tensA} + ${tensB} = <b class="text-primary">${tensA + tensB}</b></span></div>
+                                <div class="mb-3 d-flex align-items-center"><span class="badge bg-primary rounded-pill me-3">2</span><span>${T.units_label} ${unitsA} + ${unitsB} = <b class="text-primary">${unitsA + unitsB}</b></span></div>
+                                <div class="text-center mt-4 pt-3 border-top"><div class="display-6 fw-bold gradient-text">${a + b}</div></div>
+                            </div>`;
+                        return;
+                    }
+                }
+                resultDiv.innerHTML = `<div class="alert alert-soft-danger text-center">Try: 45 + 27</div>`;
+            };
+
+            function loadSymbolDecoder() {
+                const symbols = [
+                    { s: '+', n: 'Plus', d: 'Add together' },
+                    { s: '-', n: 'Minus', d: 'Take away' },
+                    { s: '×', n: 'Times', d: 'Groups of' },
+                    { s: '÷', n: 'Divide', d: 'Share equally' }
+                ];
+                modalBody.innerHTML = `
+                    <div class="row g-3">
+                        ${symbols.map(s => `
+                            <div class="col-6"><div class="p-3 bg-light rounded-4 border h-100">
+                                <div class="display-6 fw-bold text-primary mb-2">${s.s}</div>
+                                <div class="fw-bold">${s.n}</div>
+                                <div class="small text-secondary">${s.d}</div>
+                            </div></div>`).join('')}
+                    </div>`;
+            }
+
+            // --- ORGANIZATION HACKS ---
+            function loadColorCodedFiling() {
+                const cats = [
+                    { n: 'Personal', c: '#ff4b2b' },
+                    { n: 'School', c: '#3b82f6' },
+                    { n: 'Work', c: '#2dd4bf' },
+                    { n: 'Health', c: '#a855f7' }
+                ];
+                modalBody.innerHTML = `
+                    <div class="filing-tool">
+                        <p class="text-secondary mb-4">Color coding helps your brain find folders faster.</p>
+                        <div class="row g-3">
+                            ${cats.map(c => `
+                                <div class="col-6">
+                                    <div class="p-4 rounded-4 text-white shadow-sm" style="background: ${c.c}">
+                                        <div class="fs-1 mb-2">📁</div>
+                                        <div class="fw-bold h5 mb-0">${c.n}</div>
+                                    </div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                `;
+            }
+
+            function loadDigitalDeclutter() {
+                modalBody.innerHTML = `
+                    <div class="declutter-tool">
+                        <h4 class="fw-bold mb-4">Cleanup Checklist</h4>
+                        <div class="list-group gap-2">
+                            <label class="list-group-item glass-card border-0 d-flex gap-3">
+                                <input class="form-check-input" type="checkbox"> <span>Empty Recycle Bin</span>
+                            </label>
+                            <label class="list-group-item glass-card border-0 d-flex gap-3">
+                                <input class="form-check-input" type="checkbox"> <span>Archive Old Emails</span>
+                            </label>
+                            <label class="list-group-item glass-card border-0 d-flex gap-3">
+                                <input class="form-check-input" type="checkbox"> <span>Clear Desktop Shortcuts</span>
+                            </label>
+                            <label class="list-group-item glass-card border-0 d-flex gap-3">
+                                <input class="form-check-input" type="checkbox" checked> <span>Sort 'Downloads' Folder</span>
+                            </label>
+                        </div>
+                    </div>
+                `;
+            }
+
+            function loadRoutineBuilder() {
+                modalBody.innerHTML = `
+                    <div class="routine-tool text-center p-3">
+                        <div class="btn-group w-100 mb-4 rounded-pill overflow-hidden border">
+                            <button class="btn btn-premium active" onclick="updateRoutine('morning')">${T.routine_morning}</button>
+                            <button class="btn btn-outline-secondary border-0" onclick="updateRoutine('afternoon')">${T.routine_afternoon}</button>
+                            <button class="btn btn-outline-secondary border-0" onclick="updateRoutine('night')">${T.routine_night}</button>
+                        </div>
+                        <div class="p-4 bg-light rounded-4 border text-start" id="routine-content">
+                            <!-- Morning content by default -->
+                            <div class="d-flex align-items-center mb-3">
+                                <span class="fs-3 me-3">☕</span>
+                                <div><div class="fw-bold">Morning Coffee/Water</div><div class="small text-secondary">Hydrate & Refresh</div></div>
+                            </div>
+                            <div class="d-flex align-items-center">
+                                <span class="fs-3 me-3">📓</span>
+                                <div><div class="fw-bold">Check Planner</div><div class="small text-secondary">See today's top 3 goals</div></div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                window.updateRoutine = (time) => {
+                    const content = document.getElementById('routine-content');
+                    const routines = {
+                        morning: `
+                            <div class="d-flex align-items-center mb-3">
+                                <span class="fs-3 me-3">☕</span>
+                                <div><div class="fw-bold">Morning Coffee/Water</div><div class="small text-secondary">Hydrate & Refresh</div></div>
+                            </div>
+                            <div class="d-flex align-items-center">
+                                <span class="fs-3 me-3">📓</span>
+                                <div><div class="fw-bold">Check Planner</div><div class="small text-secondary">See today's top 3 goals</div></div>
+                            </div>`,
+                        afternoon: `
+                            <div class="d-flex align-items-center mb-3">
+                                <span class="fs-3 me-3">🚶</span>
+                                <div><div class="fw-bold">Quick Walk</div><div class="small text-secondary">Reset your focus</div></div>
+                            </div>
+                            <div class="d-flex align-items-center">
+                                <span class="fs-3 me-3">🧹</span>
+                                <div><div class="fw-bold">Desk Cleanup</div><div class="small text-secondary">Clear clutter for 5 mins</div></div>
+                            </div>`,
+                        night: `
+                            <div class="d-flex align-items-center mb-3">
+                                <span class="fs-3 me-3">📵</span>
+                                <div><div class="fw-bold">No Screen Time</div><div class="small text-secondary">Wind down for sleep</div></div>
+                            </div>
+                            <div class="d-flex align-items-center">
+                                <span class="fs-3 me-3">🛌</span>
+                                <div><div class="fw-bold">Review Successes</div><div class="small text-secondary">Think of 3 good things</div></div>
+                            </div>`
+                    };
+                    content.innerHTML = routines[time];
+                    const btns = document.querySelectorAll('.routine-tool .btn');
+                    btns.forEach(b => {
+                        b.classList.remove('btn-premium', 'active');
+                        b.classList.add('btn-outline-secondary');
+                    });
+                    event.target.classList.add('btn-premium', 'active');
+                    event.target.classList.remove('btn-outline-secondary');
+                };
+            }
+
+            // Global Helper Window Functions
+            window.clearDictation = () => document.getElementById('dictation-text').innerHTML = `<span class="text-muted italic">${T.spoken_placeholder}</span>`;
+            window.copyDictation = () => {
+                const t = document.getElementById('dictation-text').innerText;
+                navigator.clipboard.writeText(t);
+                alert('Copied to clipboard!');
+            };
+
+        });
+    </script>
+    {% endblock %}
+
+
+    <div class="text-center mt-5 pt-5 fade-in delay-2">
+        <a href="{{ url_for('learning') }}" class="btn btn-link text-decoration-none fw-bold">
+            {{ t.back_to_modules if t.back_to_modules else '← Back to All Modules' }}
+        </a>
+    </div>
+</div>
+{% endblock %}

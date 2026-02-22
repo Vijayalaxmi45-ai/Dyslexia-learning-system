@@ -1,0 +1,74 @@
+{% extends "base.html" %}
+
+{% block title %}{{ t.contact }} - {{ t.title }}{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center py-5 fade-in">
+        <div class="col-lg-6 col-md-8">
+            <div class="glass-card p-5 mt-4 border-0 shadow-2xl position-relative overflow-hidden">
+                <!-- Decorative Circle -->
+                <div class="position-absolute top-0 end-0 p-5 opacity-10" style="transform: translate(30%, -30%);">
+                    <div class="display-1">📬</div>
+                </div>
+
+                <div class="position-relative" style="z-index: 2;">
+                    <div class="text-center mb-5">
+                        <h1 class="fw-extrabold display-5 mb-3">{{ t.contact }}</h1>
+                        <p class="text-secondary opacity-75 fs-5">{{ t.contact_text }}</p>
+                    </div>
+
+                    <form onsubmit="event.preventDefault(); alert('Message sent successfully! (Demo Only)');">
+                        <div class="mb-4">
+                            <label class="form-label fw-bold small text-uppercase tracking-wider opacity-75">{{ t.name
+                                }}</label>
+                            <input type="text" class="form-control form-control-lg rounded-4 p-3 bg-light border-0"
+                                placeholder="{{ t.placeholder_name }}" required>
+                        </div>
+                        <div class="mb-4">
+                            <label class="form-label fw-bold small text-uppercase tracking-wider opacity-75">{{
+                                t.email_label }}</label>
+                            <input type="email" class="form-control form-control-lg rounded-4 p-3 bg-light border-0"
+                                placeholder="{{ t.placeholder_email }}" required>
+                        </div>
+                        <div class="mb-5">
+                            <label class="form-label fw-bold small text-uppercase tracking-wider opacity-75">{{ t.msg
+                                }}</label>
+                            <textarea class="form-control form-control-lg rounded-4 p-3 bg-light border-0" rows="5"
+                                placeholder="{{ t.placeholder_msg }}" required></textarea>
+                        </div>
+                        <button type="submit" class="btn btn-premium btn-lg w-100 py-3 shadow-xl">
+                            {{ t.send_msg }}
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .fw-extrabold {
+        font-weight: 900;
+    }
+
+    .tracking-wider {
+        letter-spacing: 0.1em;
+    }
+
+    .form-control:focus {
+        background: white !important;
+        box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1);
+    }
+
+    .dark-theme .form-control {
+        background: #1e293b !important;
+        color: white;
+    }
+
+    .dark-theme .form-control:focus {
+        background: #334155 !important;
+    }
+</style>
+{% endblock %}
+ 

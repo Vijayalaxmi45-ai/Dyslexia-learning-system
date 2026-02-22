@@ -1,0 +1,173 @@
+{% extends "base.html" %}
+
+{% block title %}{{ t.dashboard }} - {{ t.title }}{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row mb-5 align-items-center fade-in">
+        <div class="col-md-8">
+            <h1 class="display-4 fw-extrabold mb-2 lh-1">{{ t.welcome }}, {{ current_user.username }}!</h1>
+            <p class="text-secondary lead fs-4 opacity-75">Your personal learning and progress hub.</p>
+        </div>
+        <div class="col-md-4 text-md-end">
+            <a href="{{ url_for('assessment') }}" class="btn btn-premium btn-lg shadow-xl py-3 px-4">
+                ➕ {{ t.new_test }}
+            </a>
+        </div>
+    </div>
+
+    <div class="row g-5">
+        <!-- Assessment History -->
+        <div class="col-lg-8 fade-in delay-1 overflow-hidden">
+            <div class="glass-card p-5 h-100">
+                <div class="d-flex justify-content-between align-items-center mb-5">
+                    <h2 class="fw-bold h3 mb-0">📜 {{ t.history }}</h2>
+                    <span class="badge rounded-pill bg-primary bg-opacity-10 text-primary p-2 px-3 fw-bold">{{
+                        results|length }} total</span>
+                </div>
+
+                {% if results %}
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle custom-table">
+                        <thead>
+                            <tr class="text-secondary small text-uppercase tracking-wider">
+                                <th class="border-0 pb-4">Date</th>
+                                <th class="border-0 pb-4">{{ t.score }}</th>
+                                <th class="border-0 pb-4">{{ t.interpretation }}</th>
+                                <th class="border-0 pb-4"></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for result in results %}
+                            <tr class="assessment-row">
+                                <td class="py-4 fw-medium">{{ result.created_at.strftime('%d %b %Y, %H:%M') }}</td>
+                                <td class="py-4">
+                                    <div class="d-flex align-items-center gap-2">
+                                        <div class="score-circle"
+                                            style="--score-percent: {{ (result.score / 8) * 100 }}%">
+                                            {{ result.score }}
+                                        </div>
+                                        <span class="small text-secondary">/ 8</span>
+                                    </div>
+                                </td>
+                                <td class="py-4 text-secondary small">{{ result.interpretation }}</td>
+                                <td class="py-4 text-end">
+                                    <button
+                                        class="btn btn-light glass-card btn-sm rounded-3 border-0 px-3 py-2">Details</button>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="text-center py-5">
+                    <div class="display-1 mb-4 opacity-25">📁</div>
+                    <p class="text-secondary lead mb-4">{{ t.no_results }}</p>
+                    <a href="{{ url_for('assessment') }}" class="btn btn-outline-primary btn-lg rounded-4 px-5">{{
+                        t.new_test }}</a>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Sidebar -->
+        <div class="col-lg-4 fade-in delay-2">
+            <div class="glass-card p-5 mb-5 bg-primary text-white premium-promo">
+                <h3 class="fw-bold h4 mb-3">Next Steps 🚀</h3>
+                <p class="opacity-90 mb-4 small">Based on your recent tests, we recommend these tools to sharpen your
+                    skills.</p>
+                <div class="d-grid gap-3">
+                    <a href="{{ url_for('learning') }}"
+                        class="btn btn-white bg-white text-primary fw-bold rounded-4 py-3 shadow-sm border-0">
+                        📚 {{ t.tools }}
+                    </a>
+                </div>
+            </div>
+
+            <div class="glass-card p-5">
+                <h3 class="fw-bold h4 mb-4">Quick Links</h3>
+                <div class="list-group list-group-flush bg-transparent">
+                    <a href="{{ url_for('about') }}"
+                        class="list-group-item list-group-item-action bg-transparent border-0 px-0 py-3 d-flex justify-content-between align-items-center">
+                        <span class="fw-medium">📖 How it Works</span>
+                        <span class="text-secondary small">→</span>
+                    </a>
+                    <a href="{{ url_for('contact') }}"
+                        class="list-group-item list-group-item-action bg-transparent border-0 px-0 py-3 d-flex justify-content-between align-items-center">
+                        <span class="fw-medium">📞 Help & Support</span>
+                        <span class="text-secondary small">→</span>
+                    </a>
+                    <a href="{{ url_for('logout') }}"
+                        class="list-group-item list-group-item-action bg-transparent border-0 px-0 py-3 d-flex justify-content-between align-items-center text-danger">
+                        <span class="fw-bold">{{ t.logout }}</span>
+                        <span class="opacity-50 small">→</span>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .fw-extrabold {
+        font-weight: 900;
+    }
+
+    .tracking-wider {
+        letter-spacing: 0.1em;
+    }
+
+    .assessment-row {
+        transition: background 0.2s ease;
+        cursor: pointer;
+    }
+
+    .assessment-row:hover {
+        background: rgba(0, 0, 0, 0.02);
+    }
+
+    .dark-theme .assessment-row:hover {
+        background: rgba(255, 255, 255, 0.05);
+    }
+
+    .score-circle {
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        background: conic-gradient(#6366f1 var(--score-percent), #e2e8f0 0);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.8rem;
+        font-weight: 800;
+        color: var(--text-color);
+        position: relative;
+    }
+
+    .score-circle::before {
+        content: "";
+        position: absolute;
+        width: 28px;
+        height: 28px;
+        border-radius: 50%;
+        background: var(--bg-color);
+    }
+
+    .score-circle>* {
+        position: relative;
+        z-index: 1;
+    }
+
+    .premium-promo {
+        background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%) !important;
+        border: none;
+    }
+
+    .btn-white:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+    }
+</style>
+{% endblock %}
+ 

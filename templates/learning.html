@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+
+{% block title %}Learning Hub - {{ t.title }}{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="text-center mb-5 fade-in">
+        <h1 class="display-3 fw-extrabold mb-3 gradient-text">📘 {{ t.tools }}</h1>
+        <p class="text-secondary lead fs-4 opacity-75">Discover tailored strategies and interactive resources.</p>
+    </div>
+
+    <div class="row g-4 fade-in delay-1">
+        {% for module in modules %}
+        <div class="col-md-6 col-lg-4">
+            <div class="glass-card h-100 p-0 overflow-hidden feature-hover border-0 shadow-lg d-flex flex-column">
+                <div class="bg-primary bg-opacity-10 py-5 text-center position-relative">
+                    <span class="display-1 position-relative" style="z-index: 2;">{{ module.icon }}</span>
+                    <div class="position-absolute top-50 start-50 translate-middle w-100 h-100 bg-white opacity-25"
+                        style="filter: blur(40px);"></div>
+                </div>
+                <div class="p-5 flex-grow-1 d-flex flex-column">
+                    <h3 class="fw-bold h4 mb-3">{{ module.title }}</h3>
+                    <p class="text-secondary opacity-75 mb-auto">{{ module.description }}</p>
+                    <div class="mt-4">
+                        <a href="{{ url_for('learning_detail', module_id=module.id) }}"
+                            class="btn btn-premium btn-lg w-100 rounded-4 shadow-sm">
+                            {{ t.explore_module if t.explore_module else 'Explore Module' }}
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<style>
+    .fw-extrabold {
+        font-weight: 900;
+    }
+
+    .gradient-text {
+        background: var(--primary-gradient);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+    }
+
+    .feature-hover {
+        transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .feature-hover:hover {
+        transform: translateY(-10px);
+        box-shadow: 0 30px 60px rgba(0, 0, 0, 0.1) !important;
+    }
+</style>
+{% endblock %}
