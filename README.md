@@ -92,7 +92,7 @@ To use Flask’s `/api/predict` from the Node API, run Flask (e.g. port 5000) an
 
 1. Import the GitHub repo (or reconnect).
 2. **Recommended:** Vercel → Project → Settings → General → **Root Directory** = `frontend`, Framework = **Vite**, Output = **`dist`**. Then `app.py` is not part of the deployment and cannot be invoked as a function.
-3. **Alternative:** Leave root as `.` and rely on the root `vercel.json` `builds` entry for `frontend/package.json` (static build only).
+3. **Alternative:** Leave root as `.` and rely on the root `vercel.json` (`installCommand` / `buildCommand` / `outputDirectory` — no legacy `builds` block, which can break the deploy step on current Vercel).
 4. Environment variable: `VITE_API_URL` = `https://your-api.onrender.com` (no trailing slash). Redeploy after changing env vars.
 5. In Vercel → Settings → General, clear any **custom** “Build Command” / “Output” that still point at Python or `app.py`.
 
