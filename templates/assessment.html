@@ -1,4 +1,4 @@
-p{% extends "base.html" %}
+{% extends "base.html" %}
 
 {% block title %}Assessment - {{ t.title }}{% endblock %}
 
@@ -122,8 +122,7 @@ p{% extends "base.html" %}
 {% block scripts %}
 <script>
     (function () {
-        const testQuestions = {{ questions| tojson
-    }};
+        const testQuestions = {{ questions | tojson }};
     let stepIndex = 0;
     const userAnswers = [];
 

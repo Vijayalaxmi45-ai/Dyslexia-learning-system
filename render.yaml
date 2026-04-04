@@ -1,0 +1,13 @@
+# Render Blueprint: deploy the API as a Web Service.
+# Set MONGODB_URI, JWT_SECRET, FRONTEND_URL in the Render dashboard.
+
+services:
+  - type: web
+    name: dyslexia-learning-api
+    runtime: node
+    rootDir: server
+    buildCommand: npm ci
+    startCommand: npm start
+    envVars:
+      - key: NODE_VERSION
+        value: 20
