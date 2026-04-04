@@ -1,47 +1,126 @@
-# Dyslexia-learning-system
+# Dyslexia Learning System
 
-The Dyslexia Learning Support System is an intelligent web-based application designed to help students with dyslexia improve their reading, writing, and comprehension skills.
+Full-stack learning and screening platform: **React (Vite) frontend**, **Node.js + Express + MongoDB Atlas API**, and an optional **Flask** app for the original Jinja templates and sklearn screening model.
 
-This repository contains a Flask web app with a small ML component used for a dyslexia screening assessment.
+## Repository layout
 
-## ML Model
+| Path | Purpose |
+|------|--------|
+| `frontend/` | Production UI for Vercel: JWT auth, dashboard, modules, quiz, screening, games, tools (TTS + speech), admin |
+| `server/` | REST API: register, login, user data, progress, quiz scores, screening (`/api/predict`), admin |
+| `app.py` | Legacy Flask app (templates, SQLite/MySQL, `/api/predict` with `ml_model/dyslexia_model.pkl`) |
 
-- Location: `ml_model/dyslexia_model.pkl`
-- Trained by: `train_model.py`
-- Model type: `sklearn.ensemble.RandomForestClassifier`
-- Input: up to 12 binary features (answers to yes/no screening questions)
-- Output: class 0 (Minimal), 1 (Mild), 2 (Strong)
+Cloud data (users, progress, quiz scores, saved assessments) lives in **MongoDB** via the Node API.
 
-Benefits of the chosen model (Random Forest):
+## API (Node)
 
-- Robust to noisy or synthetic data and performs well out-of-the-box.
-- Handles binary and categorical features without heavy preprocessing.
-- Provides fast inference suitable for web endpoints.
-- Ensemble nature reduces overfitting compared to a single decision tree.
+| Method | Path | Auth | Description |
+|--------|------|------|-------------|
+| POST | `/register` | — | Create user (bcrypt password hash); optional admin if email matches `ADMIN_EMAIL` |
+| POST | `/login` | — | Returns JWT |
+| GET | `/user-data` | Bearer | Profile + progress + quiz scores + assessments |
+| POST | `/progress` | Bearer | Upsert `{ moduleId, percentComplete?, meta? }` |
+| GET | `/progress` | Bearer | List progress documents |
+| POST | `/quiz-score` | Bearer | Save score; updates adaptive `difficultyLevel` |
+| GET | `/quiz-scores` | Bearer | List quiz attempts |
+| POST | `/api/predict` | Optional Bearer | Screening; saves assessment if token present |
+| GET | `/admin/users` | Admin JWT | Users + activity counts |
+| GET | `/admin/user/:id/progress` | Admin JWT | User progress + quizzes |
 
-## Deploying to Vercel (manual steps)
+Passwords are hashed with **bcrypt** (via `bcryptjs`). Auth uses **JWT**.
 
-1. Install Vercel CLI and log in:
+### Screening model
+
+- If `FLASK_ML_URL` is set (e.g. your Flask base URL), `POST /api/predict` proxies to Flask for the real **RandomForest** model.
+- Otherwise the API uses a **local banded heuristic** (same suggestion text style as Flask) so screening works without Python on the host.
+
+### Environment variables (`server/.env`)
+
+Copy `server/.env.example` to `server/.env` and set:
+
+- `MONGODB_URI` — MongoDB Atlas connection string  
+- `JWT_SECRET` — long random string  
+- `FRONTEND_URL` — e.g. `http://localhost:5173` or your Vercel URL (comma-separated for multiple origins)  
+- Optional: `FLASK_ML_URL`, `ADMIN_EMAIL`
+
+## Frontend (`frontend/`)
+
+- `VITE_API_URL` — API base URL with **no** trailing slash (empty in local dev: Vite proxies to `http://localhost:4000`).
+- See `frontend/.env.example`.
+
+### Run locally (full stack)
+
+1. **MongoDB Atlas**: create a cluster, database user, network access (`0.0.0.0/0` for testing), get connection string.
+2. **API** (terminal 1):
 
 ```bash
-npm i -g vercel
-vercel login
+cd server
+cp .env.example .env
+# Edit .env — set MONGODB_URI, JWT_SECRET, FRONTEND_URL=http://localhost:5173
+npm install
+npm start
 ```
 
-2. From the project root, run an initial deploy (it will guide you to connect your Git provider or deploy directly):
+3. **Frontend** (terminal 2):
 
 ```bash
-vercel --prod
+cd frontend
+npm install
+npm run dev
 ```
 
-3. If you connect via Git (recommended), add this repo to your Git provider, then import the project on Vercel and set the following Environment Variables in Vercel:
+Open `http://localhost:5173`. Register a user; data is stored in Atlas.
 
-- `SECRET_KEY` (a secure random string)
-- `DATABASE_URL` (optional; otherwise the app uses a local SQLite DB)
+### Flask (optional, legacy UI + real ML)
 
-4. Build & Output: Vercel will use `@vercel/python` to run `app.py` per `vercel.json`. If the deployment requires a different configuration, set the build command to `pip install -r requirements.txt`.
+```bash
+python -m venv .venv
+.venv\Scripts\activate   # Windows
+pip install -r requirements.txt
+set FLASK_APP=app.py
+set DATABASE_URL=sqlite:///dyslexia.db
+python app.py
+```
 
-5. Alternatively, you can deploy locally via Heroku/Render if you need a persistent server process (Vercel supports serverless invocation patterns).
+To use Flask’s `/api/predict` from the Node API, run Flask (e.g. port 5000) and set `FLASK_ML_URL=http://localhost:5000` in `server/.env`.
 
-If you want, I can: commit these changes, push to a remote Git repository you provide, and/or continue by preparing a Vercel project—I'll need access or API token to create the Vercel project on your behalf.
+## Deploy
 
+### Frontend — Vercel
+
+1. Import the GitHub repo.
+2. **Root Directory**: leave as repo root **or** set build to use `frontend` per `vercel.json` at the root (`installCommand` / `buildCommand` / `outputDirectory` already point at `frontend/`).
+3. Environment variable: `VITE_API_URL` = `https://your-api.onrender.com` (your deployed API URL, no trailing slash).
+4. Redeploy after changing env vars.
+
+### Backend — Render (example)
+
+1. New **Web Service**, connect the repo.
+2. **Root Directory**: `server`
+3. **Build**: `npm ci`  
+4. **Start**: `npm start`
+5. Set `MONGODB_URI`, `JWT_SECRET`, `FRONTEND_URL` (your Vercel URL, e.g. `https://dyslexia-learning-system.vercel.app`).
+
+`render.yaml` in the repo is a starting blueprint; you can still tune settings in the Render UI.
+
+### CORS
+
+`FRONTEND_URL` must match the browser origin of your SPA (scheme + host, no path). Multiple origins: comma-separated list in `FRONTEND_URL`.
+
+## Admin
+
+Set `ADMIN_EMAIL` on the server to your admin’s email (lowercase). The **first** registered user with that email receives `role: "admin"` and can open `/admin` in the SPA.
+
+## ML model (Flask)
+
+- File: `ml_model/dyslexia_model.pkl`
+- Trainer: `train_model.py`
+- Input: up to 12 binary answers; output: class 0 / 1 / 2
+
+## Fixes applied in this repo
+
+- `templates/assessment.html`: removed stray `p` before `{% extends %}` and corrected `questions | tojson` (was broken JSON in the script block).
+
+## License / attribution
+
+© 2026 Dyslexia Learning System. Adjust license as needed for your organization.
