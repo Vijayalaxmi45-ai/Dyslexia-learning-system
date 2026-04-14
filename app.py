@@ -786,6 +786,21 @@ def index():
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
+        # Handle JSON request from React frontend
+        if request.is_json:
+            data = request.get_json()
+            email = data.get('email')
+            password = data.get('password')
+            user = User.query.filter_by(email=email).first()
+            if user and user.check_password(password):
+                login_user(user)
+                return jsonify({
+                    'token': 'mock-jwt-token', # Flask uses sessions, but React expects a token
+                    'user': {'id': user.id, 'username': user.username, 'email': user.email}
+                })
+            return jsonify({'error': 'Invalid email or password'}), 401
+
+        # Handle Form request from Flask templates
         email = request.form.get('email')
         password = request.form.get('password')
         user = User.query.filter_by(email=email).first()
@@ -798,6 +813,24 @@ def login():
 @app.route('/register', methods=['GET', 'POST'])
 def register():
     if request.method == 'POST':
+        if request.is_json:
+            data = request.get_json()
+            username = data.get('username') or data.get('name') # Support 'name' from React
+            email = data.get('email')
+            password = data.get('password')
+            
+            if User.query.filter_by(email=email).first():
+                return jsonify({'error': 'Email already registered'}), 409
+            
+            new_user = User(username=username, email=email)
+            new_user.set_password(password)
+            db.session.add(new_user)
+            db.session.commit()
+            return jsonify({
+                'token': 'mock-jwt-token',
+                'user': {'id': new_user.id, 'username': new_user.username, 'email': new_user.email}
+            })
+
         username = request.form.get('username')
         email = request.form.get('email')
         password = request.form.get('password')
@@ -975,6 +1008,19 @@ def predict():
         'prediction': prediction,
         'analysis': analysis,
         'suggestions': suggestions
+    })
+
+@app.route('/user-data')
+@login_required
+def user_data():
+    results = AssessmentResult.query.filter_by(user_id=current_user.id).order_by(AssessmentResult.created_at.desc()).all()
+    return jsonify({
+        'user': {
+            'id': current_user.id,
+            'username': current_user.username,
+            'email': current_user.email
+        },
+        'assessments': [{'score': r.score, 'interpretation': r.interpretation, 'created_at': r.created_at.isoformat()} for r in results]
     })
 
 @app.route('/logout')
