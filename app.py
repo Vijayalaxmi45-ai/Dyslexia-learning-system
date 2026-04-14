@@ -826,6 +826,23 @@ def login():
         flash('Invalid email or password', 'error')
     return render_template('login.html')
 
+@app.route('/google-login')
+def google_login():
+    # Mock Google Auth logic: In a real app we'd get data from Google
+    email = "google_user@example.com"
+    username = "Google Student"
+    
+    user = User.query.filter_by(email=email).first()
+    if not user:
+        user = User(username=username, email=email)
+        user.set_password("google-secure-password-123")
+        db.session.add(user)
+        db.session.commit()
+    
+    login_user(user)
+    flash('Successfully logged in with Google!', 'success')
+    return redirect(url_for('dashboard'))
+
 @app.route('/register', methods=['GET', 'POST'])
 def register():
     if request.method == 'POST':
