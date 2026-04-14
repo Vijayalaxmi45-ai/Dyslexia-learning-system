@@ -23,6 +23,18 @@ db = SQLAlchemy(app)
 login_manager = LoginManager(app)
 login_manager.login_view = 'login'
 
+# Initialize database on startup (needed for Vercel/tmp)
+with app.app_context():
+    db.create_all()
+
+# Load ML model with absolute path
+MODEL_PATH = os.path.join(os.path.dirname(__file__), 'ml_model', 'dyslexia_model.pkl')
+try:
+    model = joblib.load(MODEL_PATH)
+except Exception as e:
+    print(f"Warning: Model could not be loaded: {e}")
+    model = None
+
 # --- Translations ---
 TRANSLATIONS = {
     'en': {
@@ -748,13 +760,6 @@ def toggle_theme():
     session['theme'] = 'dark' if current_theme == 'light' else 'light'
     return redirect(request.referrer or url_for('index'))
 
-# Load ML Model
-try:
-    model = joblib.load('ml_model/dyslexia_model.pkl')
-except Exception as e:
-    print(f"Error loading model: {e}")
-    model = None
-
 # --- Models ---
 class User(UserMixin, db.Model):
     __tablename__ = 'users'
@@ -1004,11 +1009,5 @@ def logout():
     return redirect(url_for('index'))
 
 if __name__ == '__main__':
-    with app.app_context():
-        try:
-            db.create_all()
-        except Exception as e:
-            print(f"Database connection error: {e}")
-            
     port = int(os.environ.get('PORT', 5000))
     app.run(host='0.0.0.0', port=port, debug=False)
