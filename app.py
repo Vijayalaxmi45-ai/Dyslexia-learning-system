@@ -886,9 +886,62 @@ def predict():
     data = request.json
     answers = data.get('answers', [])
     
-    features = [1 if a else 0 for a in answers]
-    # Pad features to 12 for the ML model
-    features += [0] * (12 - len(features))
+    # Map 12 boolean answers to 11 numeric features (0-10 scale usually, but we'll scale booleans)
+    # New Model features:
+    # phonological_awareness, rhyming_score, rapid_naming_speed,
+    # decoding_accuracy, spelling_accuracy, writing_speed,
+    # memory_span, reversals_frequency, visual_place_loss,
+    # attention_span, family_history
+    
+    # Simple mapping heuristic:
+    # answers[0]: tiring -> place_loss+, decoding-
+    # answers[1]: left/right -> reversals+
+    # answers[2]: math/tables -> memory-
+    # answers[3]: spelling -> spelling-
+    # answers[4]: skip lines -> place_loss+
+    # answers[5]: copy notes -> writing-
+    # answers[6]: blur letters -> place_loss+
+    # answers[7]: oral preference -> writing-
+    # answers[8]: misread words -> decoding-
+    # answers[9]: sequence instructions -> memory-
+    # answers[10]: finish on time -> attention-
+    # answers[11]: wandering mind -> attention-
+
+    # We'll normalize these to a 0-10 scale for the RF model
+    # Note: For some features, high value = "good", for others (reversals, place_loss) it was high = "indicators".
+    # My generate_dataset script used:
+    # 0 (Normal): phonological(7-10), reversals(0-3)
+    # 1 (Mild): phonological(4-8), reversals(2-6)
+    # 2 (Strong): phonological(0-5), reversals(5-10)
+    
+    mapping = {
+        'phonological_awareness': 8 if not (answers[3] or answers[8]) else 3,
+        'rhyming_score': 8 if not answers[3] else 4,
+        'rapid_naming_speed': 8 if not (answers[4] or answers[10]) else 3,
+        'decoding_accuracy': 8 if not (answers[0] or answers[8]) else 3,
+        'spelling_accuracy': 8 if not answers[3] else 2,
+        'writing_speed': 8 if not (answers[5] or answers[7]) else 3,
+        'memory_span': 8 if not (answers[2] or answers[9]) else 2,
+        'reversals_frequency': 8 if answers[1] else 1,
+        'visual_place_loss': 8 if (answers[0] or answers[4] or answers[6]) else 1,
+        'attention_span': 8 if not (answers[10] or answers[11]) else 3,
+        'family_history': 0 # We don't have this in the current UI, so default to 0
+    }
+    
+    features = [
+        mapping['phonological_awareness'],
+        mapping['rhyming_score'],
+        mapping['rapid_naming_speed'],
+        mapping['decoding_accuracy'],
+        mapping['spelling_accuracy'],
+        mapping['writing_speed'],
+        mapping['memory_span'],
+        mapping['reversals_frequency'],
+        mapping['visual_place_loss'],
+        mapping['attention_span'],
+        mapping['family_history']
+    ]
+    
     prediction = int(model.predict([features])[0])
     
     analysis_map = {
