@@ -35,13 +35,6 @@ def get_model():
             print(f"Warning: Model could not be loaded: {e}")
     return model
 
-# Initialize database on startup slightly more safely
-try:
-    with app.app_context():
-        db.create_all()
-except:
-    pass
-
 login_manager = LoginManager(app)
 login_manager.login_view = 'login'
 
@@ -1024,6 +1017,11 @@ def logout():
 def internal_error(error):
     import traceback
     return f"<h1>Internal Server Error</h1><pre>{traceback.format_exc()}</pre>", 500
+
+# Initialize database on EVERY request to ensure tables exist in ephemeral /tmp
+@app.before_request
+def initial_db_setup():
+    db.create_all()
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))

@@ -13,6 +13,18 @@
                     <p class="text-secondary opacity-75 mt-2">Join our community and start your journey.</p>
                 </div>
 
+                <div class="mb-4">
+                    <a href="#" class="btn btn-outline-dark w-100 rounded-4 p-3 d-flex align-items-center justify-content-center gap-2 border-opacity-25" style="border: 1px solid #ddd;">
+                        <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google" width="20">
+                        Continue with Google
+                    </a>
+                </div>
+
+                <div class="position-relative text-center mb-4">
+                    <hr class="opacity-10">
+                    <span class="position-absolute top-50 start-50 translate-middle bg-white px-3 small text-secondary">OR</span>
+                </div>
+
                 <form action="{{ url_for('register') }}" method="POST">
                     <div class="mb-4">
                         <label for="username"
