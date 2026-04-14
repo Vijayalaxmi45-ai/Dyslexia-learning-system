@@ -1,9 +1,10 @@
 flask
 flask-sqlalchemy
 flask-login
-mysql-connector-python
+flask-cors
+werkzeug
+joblib
 scikit-learn
 pandas
-joblib
-python-dotenv
+numpy
 gunicorn
