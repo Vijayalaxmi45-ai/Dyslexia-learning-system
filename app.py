@@ -994,6 +994,31 @@ def predict():
         'suggestions': suggestions
     })
 
+@app.route('/api/chat', methods=['POST'])
+def chat():
+    data = request.json
+    message = data.get('message', '').lower()
+    
+    # AI specialized knowledge base
+    knowledge = {
+        'dyslexia': "Dyslexia is a learning difference that primarily affects reading and spelling. It's related to how the brain processes language, not intelligence!",
+        'symptoms': "Common symptoms include slow reading, difficulty spelling, and reversing letters. Our screening test can help identify these patterns.",
+        'help': "You can help by using multi-sensory learning, text-to-speech tools, and providing a supportive, patient environment.",
+        'test': "Our screening test uses clinical features to analyze reading accuracy, speed, and phonological awareness.",
+        'tools': "Check out our Tools page for a Reading Ruler, Color Overlays, and specialized Dyslexic Fonts!",
+        'hello': "Hello! I'm your Dyslexia Support Assistant. How can I help you today?",
+        'hi': "Hi there! Feel free to ask me anything about dyslexia or how to use this platform."
+    }
+    
+    response = "That's a great question! While I'm still learning, I recommend checking our 'About' or 'Learning' sections for more details. Can I help with symptoms or tools?"
+    
+    for key in knowledge:
+        if key in message:
+            response = knowledge[key]
+            break
+            
+    return jsonify({'response': response})
+
 @app.route('/user-data')
 @login_required
 def user_data():

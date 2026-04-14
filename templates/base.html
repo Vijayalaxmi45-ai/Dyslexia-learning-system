@@ -212,6 +212,114 @@
             color: white !important;
             border: 1px solid rgba(255, 255, 255, 0.1) !important;
         }
+
+        /* --- Chatbot Styles --- */
+        #chatbot-bubble {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            width: 65px;
+            height: 65px;
+            background: var(--primary-gradient);
+            border-radius: 50% 50% 0 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 28px;
+            color: white;
+            cursor: pointer;
+            box-shadow: 0 10px 30px rgba(99, 102, 241, 0.4);
+            z-index: 10000;
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        #chatbot-bubble:hover {
+            transform: scale(1.1) rotate(5deg);
+        }
+
+        #chatbot-window {
+            position: fixed;
+            bottom: 110px;
+            right: 30px;
+            width: 380px;
+            height: 550px;
+            background: var(--card-bg);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--border-color);
+            border-radius: 30px;
+            display: none;
+            flex-direction: column;
+            overflow: hidden;
+            z-index: 10000;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.2);
+            animation: slideUp 0.4s ease-out;
+        }
+
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .chat-header {
+            padding: 20px;
+            background: var(--primary-gradient);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .chat-messages {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .message {
+            padding: 12px 16px;
+            border-radius: 18px;
+            max-width: 85%;
+            font-size: 0.95rem;
+            line-height: 1.4;
+        }
+
+        .bot-message {
+            background: rgba(99, 102, 241, 0.1);
+            color: var(--text-color);
+            align-self: flex-start;
+            border-bottom-left-radius: 4px;
+        }
+
+        .user-message {
+            background: var(--primary-gradient);
+            color: white;
+            align-self: flex-end;
+            border-bottom-right-radius: 4px;
+        }
+
+        .chat-input {
+            padding: 20px;
+            border-top: 1px solid var(--border-color);
+            display: flex;
+            gap: 10px;
+        }
+
+        .chat-input input {
+            flex: 1;
+            border: none;
+            background: rgba(0,0,0,0.05);
+            padding: 12px 18px;
+            border-radius: 14px;
+            outline: none;
+            color: var(--text-color);
+        }
+
+        .dark-theme .chat-input input {
+            background: rgba(255,255,255,0.05);
+        }
     </style>
     {% block head %}{% endblock %}
 </head>
@@ -307,6 +415,24 @@
         </div>
     </footer>
 
+    <!-- Chatbot Elements -->
+    <div id="chatbot-bubble" onclick="toggleChat()">💬</div>
+    <div id="chatbot-window">
+        <div class="chat-header">
+            <span class="fw-bold fs-5">Dyslexia Assistant</span>
+            <span style="cursor: pointer;" onclick="toggleChat()">✕</span>
+        </div>
+        <div class="chat-messages" id="chat-messages">
+            <div class="message bot-message">
+                Hello! I'm here to help you learn about dyslexia and use our tools. Ask me anything!
+            </div>
+        </div>
+        <form class="chat-input" id="chat-form">
+            <input type="text" id="user-input" placeholder="Type a message..." required autocomplete="off">
+            <button type="submit" class="btn btn-premium p-2 px-3">➤</button>
+        </form>
+    </div>
+
     <!-- Tools Elements -->
     <div id="reading-overlay"></div>
     <div id="reading-ruler"></div>
@@ -347,6 +473,45 @@
             const toggles = document.querySelectorAll('#font-toggle');
             toggles.forEach(t => t.checked = document.body.classList.contains('dyslexic-font'));
         };
+
+        // Chatbot Logic
+        const chatWindow = document.getElementById('chatbot-window');
+        const chatMessages = document.getElementById('chat-messages');
+        const chatForm = document.getElementById('chat-form');
+        const userInput = document.getElementById('user-input');
+
+        window.toggleChat = function() {
+            chatWindow.style.display = chatWindow.style.display === 'flex' ? 'none' : 'flex';
+        };
+
+        chatForm.onsubmit = async (e) => {
+            e.preventDefault();
+            const msg = userInput.value;
+            if(!msg) return;
+
+            appendMessage(msg, 'user');
+            userInput.value = '';
+
+            try {
+                const res = await fetch('/api/chat', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({message: msg})
+                });
+                const data = await res.json();
+                appendMessage(data.response, 'bot');
+            } catch (err) {
+                appendMessage("I'm having trouble connecting. Please try again later.", 'bot');
+            }
+        };
+
+        function appendMessage(text, side) {
+            const div = document.createElement('div');
+            div.className = `message ${side}-message fade-in`;
+            div.textContent = text;
+            chatMessages.appendChild(div);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
     </script>
     {% block scripts %}{% endblock %}
 </body>
