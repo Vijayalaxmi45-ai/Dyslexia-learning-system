@@ -19,6 +19,13 @@ const app = express();
 const PORT = Number(process.env.PORT) || 4000;
 const FRONTEND = process.env.FRONTEND_URL || '*';
 
+if (!process.env.MONGODB_URI) {
+  console.warn('⚠️ WARNING: MONGODB_URI is not set. Registration and login will fail.');
+}
+if (!process.env.JWT_SECRET) {
+  console.warn('⚠️ WARNING: JWT_SECRET is not set. Authentication will fail.');
+}
+
 app.set('trust proxy', 1);
 app.use(helmet({ crossOriginResourcePolicy: { policy: 'cross-origin' } }));
 app.use(
@@ -87,8 +94,8 @@ app.post('/register', registerLimiter, async (req, res) => {
       user: { id: user._id, name: user.name, email: user.email, role: user.role },
     });
   } catch (e) {
-    console.error(e);
-    return res.status(500).json({ error: 'Registration failed' });
+    console.error('Registration Error:', e);
+    return res.status(500).json({ error: `Registration failed: ${e.message}` });
   }
 });
 
