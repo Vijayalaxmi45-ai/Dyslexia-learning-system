@@ -9,8 +9,8 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-app = Flask(__name__)
-app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'your-secret-key-123')
+app = Flask(__name__, template_folder='templates', static_folder='static')
+app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'default-v-key-321')
 # Use DATABASE_URL from environment if provided; otherwise fall back to a local SQLite DB
 # On Vercel, the filesystem is read-only. We use /tmp for the SQLite db if running in serverless.
 if os.environ.get('VERCEL'):
@@ -20,20 +20,33 @@ else:
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 db = SQLAlchemy(app)
+# Model placeholder
+model = None
+
+def get_model():
+    global model
+    if model is None:
+        MODEL_PATH = os.path.join(os.path.dirname(__file__), 'ml_model', 'dyslexia_model.pkl')
+        try:
+            import joblib
+            model = joblib.load(MODEL_PATH)
+        except Exception as e:
+            print(f"Warning: Model could not be loaded: {e}")
+    return model
+
+# Initialize database on startup slightly more safely
+try:
+    with app.app_context():
+        db.create_all()
+except:
+    pass
+
 login_manager = LoginManager(app)
 login_manager.login_view = 'login'
 
-# Initialize database on startup (needed for Vercel/tmp)
-with app.app_context():
-    db.create_all()
-
-# Load ML model with absolute path
-MODEL_PATH = os.path.join(os.path.dirname(__file__), 'ml_model', 'dyslexia_model.pkl')
-try:
-    model = joblib.load(MODEL_PATH)
-except Exception as e:
-    print(f"Warning: Model could not be loaded: {e}")
-    model = None
+@login_manager.user_loader
+def load_user(user_id):
+    return User.query.get(int(user_id))
 
 # --- Translations ---
 TRANSLATIONS = {
@@ -922,39 +935,37 @@ def assessment():
 
 @app.route('/api/predict', methods=['POST'])
 def predict():
-    if not model:
-        return jsonify({'error': 'Model not loaded'}), 500
-    
-    data = request.json
-    answers = data.get('answers', [])
-    
-    # New Mapping for 6 Clinical Features:
-    # 0: Accuracy, 1: Speed, 2: Phonological, 3: Visual, 4: Memory, 5: Reversals
-    
-    # Scale results (0.0 to 1.0)
-    feat_accuracy = 1.0 - (( (1 if answers[3] else 0) + (1 if answers[8] else 0) ) / 2.0)
-    feat_speed = 1.0 - (( (1 if answers[0] else 0) + (1 if answers[4] else 0) + (1 if answers[10] else 0) ) / 3.0)
-    feat_phonological = 1.0 - (( (1 if answers[3] else 0) + (1 if answers[8] else 0) + (1 if answers[1] else 0) ) / 3.0)
-    feat_visual = 1.0 - (( (1 if answers[4] else 0) + (1 if answers[6] else 0) ) / 2.0)
-    feat_memory = 1.0 - (( (1 if answers[2] else 0) + (1 if answers[9] else 0) ) / 2.0)
-    feat_reversals = ( (1 if answers[1] else 0) + (1 if answers[8] else 0) ) / 2.0 # High is indicator
-    
-    features = [
-        feat_accuracy,
-        feat_speed,
-        feat_phonological,
-        feat_visual,
-        feat_memory,
-        feat_reversals
-    ]
-    
-    # Simple threshold if model fails, else use RF
-    try:
-        prediction = int(model.predict([features])[0])
-    except:
-        # Fallback to score-based if features mismatch
+    current_model = get_model()
+    if not current_model:
+        # Fallback to score-based if model loading fails
+        data = request.json
+        answers = data.get('answers', [])
         score = sum(1 for a in answers if a)
         prediction = 2 if score >= 8 else (1 if score >= 4 else 0)
+    else:
+        data = request.json
+        answers = data.get('answers', [])
+        
+        if len(answers) < 12:
+            return jsonify({'error': '12 answers required'}), 400
+            
+        # Mapping for 6 Clinical Features
+        feat_accuracy = 1.0 - (( (1 if answers[3] else 0) + (1 if answers[8] else 0) ) / 2.0)
+        feat_speed = 1.0 - (( (1 if answers[0] else 0) + (1 if answers[4] else 0) + (1 if answers[10] else 0) ) / 3.0)
+        feat_phonological = 1.0 - (( (1 if answers[3] else 0) + (1 if answers[8] else 0) + (1 if answers[1] else 0) ) / 3.0)
+        feat_visual = 1.0 - (( (1 if answers[4] else 0) + (1 if answers[6] else 0) ) / 2.0)
+        feat_memory = 1.0 - (( (1 if answers[2] else 0) + (1 if answers[9] else 0) ) / 2.0)
+        feat_reversals = ( (1 if answers[1] else 0) + (1 if answers[8] else 0) ) / 2.0
+        
+        features = [feat_accuracy, feat_speed, feat_phonological, feat_visual, feat_memory, feat_reversals]
+        
+        try:
+            prediction = int(current_model.predict([features])[0])
+        except:
+            score = sum(1 for a in answers if a)
+            prediction = 2 if score >= 8 else (1 if score >= 4 else 0)
+
+    # Analysis based on prediction
     
     analysis_map = {
         0: "Minimal indicators of dyslexia detected. Keep up the good work!",
