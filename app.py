@@ -1020,6 +1020,11 @@ def logout():
     logout_user()
     return redirect(url_for('index'))
 
+@app.errorhandler(500)
+def internal_error(error):
+    import traceback
+    return f"<h1>Internal Server Error</h1><pre>{traceback.format_exc()}</pre>", 500
+
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
     app.run(host='0.0.0.0', port=port, debug=False)
